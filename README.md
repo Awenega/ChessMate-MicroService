@@ -18,7 +18,7 @@ Francesco Sudoso, matricola: 1808353
 
 ## 📱 ChessMate repository 
 
-The application code can be reached through this [link]('https://github.com/Pancio-code/ChessMate-MACC')
+The application code can be reached through this <a href="https://github.com/Pancio-code/ChessMate-MACC">link</a>.
 
 
 
