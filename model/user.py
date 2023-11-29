@@ -1,5 +1,6 @@
 from marshmallow import Schema, fields
 
+
 class User(object):
     def __init__(self, id, email, emailVerified, profilePictureUrl, provider, username):
         self.id = id
@@ -9,6 +10,7 @@ class User(object):
         self.provider = provider
         self.username = username
 
+
 class UserSchema(Schema):
     id = fields.String()
     email = fields.String()
@@ -16,5 +18,3 @@ class UserSchema(Schema):
     profilePictureUrl = fields.String()
     provider = fields.String()
     username = fields.String()
-
-    
