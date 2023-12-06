@@ -23,6 +23,7 @@ def insert_user_db(user_info, database):
     with connection.cursor() as cur:
         fields = list(user_info.keys())
         values = list(user_info.values())
+        print(fields, values)
         try:
             cur.execute(""" 
                 INSERT INTO users ({}) VALUES ({}); """.format(', '.join(fields), ', '.join(['%s'] * len(fields))), values)

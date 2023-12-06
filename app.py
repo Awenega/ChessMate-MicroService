@@ -47,7 +47,7 @@ class UserResource(Resource):
             return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 400)
 
         parameters = request.json
-        user_info = UserSchema().load(parameters)
+        user_info = UserSchema().loads(parameters)
         msg, code = insert_user_db(user_info, database)
         return make_response(jsonify(msg), code)
 
@@ -56,7 +56,7 @@ class UserResource(Resource):
             return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 400)
 
         parameters = request.json
-        user_info = UserSchema().load(parameters)
+        user_info = UserSchema().loads(parameters)
         msg, code = update_user_db(id, user_info, database)
         return make_response(jsonify(msg), code)
 
