@@ -1,9 +1,11 @@
 from flask_restful import Resource
+from firebase_admin import firestore
+from google.cloud.firestore_v1.base_query import FieldFilter, Or
 import json
 from flask import jsonify, request, make_response
-from database.queriesUser import delete_user_db, get_user_db, insert_user_db, update_user_db
-from helperCelery import handle_game_state
-from model.user import UserSchema
+from helperCelery import listen_for_game_changes
+from model.game import RoomData
+from threading import Thread
 
 
 def validate_token(request):
@@ -24,6 +26,51 @@ def load_credentials():
         return None
 
 
+def create_room(data, room_ref, db):
+    def generate_room_id(userId):
+        import hashlib
+
+        hashed_user_id = hashlib.sha256(userId.encode()).hexdigest()
+        unique_string = f"room_{hashed_user_id}"
+        return unique_string
+
+    room_data = RoomData.from_dict(data)
+    if not room_data:
+        return make_response(jsonify({'msg': 'Invalid room data format.'}), 401)
+
+    userId = data.get("playerOneId")
+    roomId = generate_room_id(userId=userId)
+    room_ref.document(roomId).set({'roomId': roomId, **data})
+    Thread(target=listen_for_game_changes, args=[roomId, db]).start()
+
+    return make_response({'roomId': roomId, **data}, 201)
+
+
+def enter_room(roomId, data, room_ref, db):
+    transaction = db.transaction()
+
+    @firestore.transactional
+    def try_enter(transaction, data):
+        try:
+            playerTwoId = data.get("playerOneId")
+            rankPlayerTwo = data.get("rankPlayerOne")
+            room = room_ref.document(roomId)
+
+            transaction.update(room, {
+                "playerTwoId": playerTwoId,
+                "isOnlinePlayerTwo": True,
+                "rankPlayerTwo": rankPlayerTwo,
+                "isFree": False,
+                "gameState": "Start"
+            })
+            return True
+        except Exception as e:
+            print(f"Error: {e}")
+            return False
+
+    return try_enter(transaction=transaction, data=data)
+
+
 # POSTGRES DB
 postgres_credentials = load_credentials()
 database = f"dbname={postgres_credentials.get('dbname')} user={postgres_credentials.get('user')} host={postgres_credentials.get('host')} password={postgres_credentials.get('password')}"
@@ -34,32 +81,57 @@ class OnlineResource(Resource):
         self.db = db
         self.rooms_ref = db.collection("Rooms")
 
-    def get(self):
+    def get(self, id):
         if not validate_token(request):
             return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 400)
-        handle_game_state('provaprova', self.db)
+
+        filter_1 = FieldFilter("playerOneId", "==", id)
+        filter_2 = FieldFilter("playerTwoId", "==", id)
+
+        or_filter = Or(filters=[filter_1, filter_2])
+
+        docs = (self.rooms_ref
+                .where(filter=or_filter)
+                .limit(1)
+                .stream())
+
+        for doc in docs:
+            return make_response(doc.to_dict(), 200)
+
+        return make_response(jsonify({'msg': 'Room not found.'}), 404)
 
     def post(self):
         if not validate_token(request):
             return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 400)
 
         parameters = request.json
-        user_info = UserSchema().loads(parameters)
-        msg, code = insert_user_db(user_info, database)
-        return make_response(jsonify(msg), code)
+
+        try:
+            rankPlayerTwo = parameters.get("rankPlayerOne")
+            docs = (self.rooms_ref
+                    .where(filter=FieldFilter("isFree", "==", True))
+                    .where(filter=FieldFilter("rankPlayerOne", ">=", rankPlayerTwo - 300.0))
+                    .where(filter=FieldFilter("rankPlayerOne", "<=", rankPlayerTwo + 300.0))
+                    .limit(10)
+                    .stream())
+
+            for doc in docs:
+                docDict = doc.to_dict()
+                roomId = docDict.get("roomId")
+                result = enter_room(
+                    roomId=roomId, data=parameters, room_ref=self.rooms_ref, db=self.db)
+                if result:
+                    return make_response(jsonify({'roomId': roomId}), 200)
+
+            return create_room(data=parameters, room_ref=self.rooms_ref, db=self.db)
+
+        except Exception as e:
+            return make_response(jsonify({'msg': str(e)}), 402)
 
     def put(self, id):
         if not validate_token(request):
             return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 400)
 
-        parameters = request.json
-        user_info = UserSchema().loads(parameters)
-        msg, code = update_user_db(id, user_info, database)
-        return make_response(jsonify(msg), code)
-
     def delete(self, id):
         if not validate_token(request):
             return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 400)
-
-        msg, code = delete_user_db(id, database)
-        return make_response(jsonify(msg), code)
