@@ -1,3 +1,4 @@
+import chess
 from flask_restful import Resource
 from firebase_admin import firestore
 from google.cloud.firestore_v1.base_query import FieldFilter, Or
@@ -58,7 +59,7 @@ def enter_room(roomId, data, room_ref, db):
 
             transaction.update(room, {
                 "playerTwoId": playerTwoId,
-                "isOnlinePlayerTwo": True,
+                "lastOnlinePlayerTwo": True,
                 "rankPlayerTwo": rankPlayerTwo,
                 "isFree": False,
                 "gameState": "Start"
@@ -131,6 +132,44 @@ class OnlineResource(Resource):
     def put(self, id):
         if not validate_token(request):
             return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 400)
+
+        parameters = request.json
+
+        try: 
+            filter_1 = FieldFilter("playerOneId", "==", id)
+            filter_2 = FieldFilter("playerTwoId", "==", id)
+
+            or_filter = Or(filters=[filter_1, filter_2])
+
+            docs = (self.rooms_ref
+                    .where(filter=or_filter)
+                    .limit(1)
+                    .stream())
+
+            for doc in docs:
+                docDict = doc.to_dict()
+                board = chess.Board(docDict.get("boardState"))
+                chess_move = chess.Move.from_uci(parameters.get("move"))
+                if chess_move in board.legal_moves:
+                    board.push(chess_move)
+                    isFinish = board.outcome() == None
+                    transaction = self.db.transaction()
+                    transaction.update(doc, {
+                        "lastMove": chess_move,
+                        "boardState": board.fen(),
+                        "currentTurn": board.turn,
+                        "gameState": "Start" if (isFinish) else "Terminate",
+                        "winner": board.outcome().winner if (isFinish) else '',
+                        "termination": board.outcome().termination if (isFinish) else ''
+                    })
+                    #if isFinish:
+                        #TODO: Create record in database
+                    return make_response(jsonify(), 200)
+                else:
+                    return make_response(jsonify({'msg': "Illegal Move!"}), 402)
+
+        except Exception as e:
+            return make_response(jsonify({'msg': str(e)}), 402)
 
     def delete(self, id):
         if not validate_token(request):

@@ -1,3 +1,6 @@
+import datetime
+
+
 class RoomData:
     def __init__(
         self,
@@ -6,22 +9,32 @@ class RoomData:
         playerTwoId=None,
         isFree=True,
         gameState="Pending",
-        isOnlinePlayerOne=True,
-        isOnlinePlayerTwo=False,
+        lastOnlinePlayerOne=datetime.now(),
+        lastOnlinePlayerTwo=None,
         rankPlayerOne=None,
         rankPlayerTwo=None,
-        dataCreation=None
+        dataCreation=datetime.now(),
+        currentTurn=None,
+        boardState="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+        lastMove=None,
+        winner="",
+        termination=""
     ):
         self.roomId = roomId
         self.playerOneId = playerOneId
         self.playerTwoId = playerTwoId
         self.isFree = isFree
         self.gameState = gameState
-        self.isOnlinePlayerOne = isOnlinePlayerOne
-        self.isOnlinePlayerTwo = isOnlinePlayerTwo
+        self.lastOnlinePlayerOne = lastOnlinePlayerOne
+        self.lastOnlinePlayerTwo = lastOnlinePlayerTwo
         self.rankPlayerOne = rankPlayerOne
         self.rankPlayerTwo = rankPlayerTwo
         self.dataCreation = dataCreation
+        self.currentTurn = currentTurn
+        self.boardState = boardState
+        self.lastMove = lastMove
+        self.winner = winner
+        self.termination = termination
 
     @staticmethod
     def from_dict(source):
@@ -37,11 +50,16 @@ class RoomData:
             "playerTwoId": self.playerTwoId,
             "isFree": self.isFree,
             "gameState": self.gameState,
-            "isOnlinePlayerOne": self.isOnlinePlayerOne,
-            "isOnlinePlayerTwo": self.isOnlinePlayerTwo,
+            "lastOnlinePlayerOne": self.lastOnlinePlayerOne,
+            "lastOnlinePlayerTwo": self.lastOnlinePlayerTwo,
             "rankPlayerOne": self.rankPlayerOne,
             "rankPlayerTwo": self.rankPlayerTwo,
-            "dataCreation": self.dataCreation
+            "dataCreation": self.dataCreation,
+            "currentTurn": self.currentTurn,
+            "boardState": self.boardState,
+            "lastMove": self.lastMove,
+            "winner": self.winner,
+            "termination": self.termination
         }
 
     def __repr__(self):
@@ -52,9 +70,14 @@ class RoomData:
             f"playerTwoId={self.playerTwoId}, "
             f"isFree={self.isFree}, "
             f"gameState={self.gameState}, "
-            f"isOnlinePlayerOne={self.isOnlinePlayerOne}, "
-            f"isOnlinePlayerTwo={self.isOnlinePlayerTwo}, "
+            f"lastOnlinePlayerOne={self.lastOnlinePlayerOne}, "
+            f"lastOnlinePlayerTwo={self.lastOnlinePlayerTwo}, "
             f"rankPlayerOne={self.rankPlayerOne}, "
             f"rankPlayerTwo={self.rankPlayerTwo}, "
-            f"dataCreation={self.dataCreation})"
+            f"dataCreation={self.dataCreation}), "
+            f"currentTurn={self.currentTurn}, "
+            f"boardState={self.boardState}, "
+            f"lastMove={self.lastMove}), "
+            f"winner={self.winner}, "
+            f"termination={self.termination}"
         )
