@@ -6,7 +6,7 @@ from model.user import UserSchema
 
 
 def validate_token(request):
-    token = request.headers.get('token')
+    token = request.headers.get('Authorization')
     return token == postgres_credentials.get('token')
 
 
