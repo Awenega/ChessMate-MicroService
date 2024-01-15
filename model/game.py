@@ -1,24 +1,26 @@
 from datetime import datetime
 
+from marshmallow import Schema,fields
+
 
 class RoomData:
     def __init__(
         self,
-        roomId=None,
-        playerOneId=None,
-        playerTwoId=None,
-        isFree=True,
-        gameState="Pending",
-        lastOnlinePlayerOne=datetime.now(),
-        lastOnlinePlayerTwo=None,
-        rankPlayerOne=None,
-        rankPlayerTwo=None,
-        dataCreation=datetime.now(),
         currentTurn=None,
         boardState="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+        dataCreation=datetime.now(),
+        isFree=True,
+        gameState="Pending",
         lastMove=None,
-        winner="",
-        termination=""
+        lastOnlinePlayerOne=datetime.now(),
+        lastOnlinePlayerTwo=None,
+        playerOneId=None,
+        playerTwoId=None,
+        rankPlayerOne=None,
+        rankPlayerTwo=None,
+        roomId=None,
+        termination="",
+        winner=""
     ):
         self.roomId = roomId
         self.playerOneId = playerOneId
@@ -81,3 +83,20 @@ class RoomData:
             f"winner={self.winner}, "
             f"termination={self.termination}"
         )
+
+class GameSchema(Schema):
+    roomId = fields.String()
+    playerOneId = fields.String()
+    playerTwoId = fields.String()
+    isFree = fields.Boolean()
+    gameState = fields.String()
+    lastOnlinePlayerOne = fields.DateTime(allow_none=True)
+    lastOnlinePlayerTwo = fields.DateTime(allow_none=True)
+    rankPlayerOne = fields.Float(allow_none=True)
+    rankPlayerTwo = fields.Float(allow_none=True)
+    dataCreation = fields.DateTime(allow_none=True)
+    currentTurn = fields.String()
+    boardState = fields.String()
+    lastMove = fields.String()
+    winner = fields.String()
+    termination = fields.String()

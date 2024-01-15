@@ -5,12 +5,12 @@ from google.cloud.firestore_v1.base_query import FieldFilter, Or
 import json
 from flask import jsonify, request, make_response
 from helperCelery import listen_for_game_changes
-from model.game import RoomData
+from model.game import GameSchema, RoomData
 from threading import Thread
 
 
 def validate_token(request):
-    token = request.headers.get('token')
+    token = request.headers.get('Authorization')
     return token == postgres_credentials.get('token')
 
 
@@ -52,6 +52,7 @@ def enter_room(roomId, data, room_ref, db):
 
     @firestore.transactional
     def try_enter(transaction, data):
+        
         try:
             playerTwoId = data.get("playerOneId")
             rankPlayerTwo = data.get("rankPlayerOne")
@@ -84,7 +85,7 @@ class OnlineResource(Resource):
 
     def get(self, id):
         if not validate_token(request):
-            return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 400)
+            return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 401)
 
         filter_1 = FieldFilter("playerOneId", "==", id)
         filter_2 = FieldFilter("playerTwoId", "==", id)
@@ -101,37 +102,42 @@ class OnlineResource(Resource):
 
         return make_response(jsonify({'msg': 'Room not found.'}), 404)
 
-    def post(self):
+    def post(self,id):
         if not validate_token(request):
-            return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 400)
-
+            return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 401)
+    
         parameters = request.json
-
+        print(parameters)
         try:
-            rankPlayerTwo = parameters.get("rankPlayerOne")
+            if isinstance(parameters, dict):
+                room_info = GameSchema().load(parameters)
+            else:
+                room_info = GameSchema().loads(parameters)
+    
+            rankPlayerTwo = float(room_info.get("rankPlayerOne"))
             docs = (self.rooms_ref
                     .where(filter=FieldFilter("isFree", "==", True))
                     .where(filter=FieldFilter("rankPlayerOne", ">=", rankPlayerTwo - 300.0))
                     .where(filter=FieldFilter("rankPlayerOne", "<=", rankPlayerTwo + 300.0))
                     .limit(10)
                     .stream())
-
+            
             for doc in docs:
                 docDict = doc.to_dict()
                 roomId = docDict.get("roomId")
                 result = enter_room(
-                    roomId=roomId, data=parameters, room_ref=self.rooms_ref, db=self.db)
+                    roomId=roomId, data=room_info, room_ref=self.rooms_ref, db=self.db)
                 if result:
-                    return make_response(jsonify({'roomId': roomId}), 200)
-
-            return create_room(data=parameters, room_ref=self.rooms_ref, db=self.db)
+                    return make_response(jsonify({'roomId': roomId, **docDict}), 200)
+            return create_room(data=room_info, room_ref=self.rooms_ref, db=self.db)
 
         except Exception as e:
+            print("Post game error: ",str(e))
             return make_response(jsonify({'msg': str(e)}), 402)
 
     def put(self, id):
         if not validate_token(request):
-            return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 400)
+            return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 401)
 
         parameters = request.json
 
@@ -173,4 +179,4 @@ class OnlineResource(Resource):
 
     def delete(self, id):
         if not validate_token(request):
-            return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 400)
+            return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 401)

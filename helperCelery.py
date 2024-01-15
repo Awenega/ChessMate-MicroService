@@ -21,6 +21,7 @@ def listen_for_game_changes(room_id, db):
 
     def on_snapshot(doc_snapshot, changes, read_time):
         for change in changes:
+            print(change)
             if change.type.name == 'MODIFIED':
                 data = change.document.to_dict()
                 playerTwo = data.get("playerTwoId")
@@ -33,6 +34,4 @@ def listen_for_game_changes(room_id, db):
         end_game.wait(timeout=timeout)
     finally:
         query_watch.unsubscribe()
-        room.delete()
-
 

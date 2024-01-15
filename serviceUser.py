@@ -30,18 +30,18 @@ database = f"dbname={postgres_credentials.get('dbname')} user={postgres_credenti
 class UserResource(Resource):
     def get(self, id):
         if not validate_token(request):
-            return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 400)
-
+            return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 401)
         user_info = get_user_db(id, database)
+        print(user_info)
         if user_info is None:
-            return make_response(jsonify({'msg': f'No User found for id: {id}'}), 400)
+            return make_response(jsonify({'msg': f'No User found for id: {id}'}), 204)
         else:
             user_schema = UserSchema().dump(user_info)
             return make_response(jsonify(user_schema), 200)
 
     def post(self):
         if not validate_token(request):
-            return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 400)
+            return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 401)
 
         parameters = request.json
         user_info = UserSchema().loads(parameters)
@@ -50,7 +50,7 @@ class UserResource(Resource):
 
     def put(self, id):
         if not validate_token(request):
-            return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 400)
+            return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 401)
 
         parameters = request.json
         user_info = UserSchema().loads(parameters)
@@ -59,7 +59,7 @@ class UserResource(Resource):
 
     def delete(self, id):
         if not validate_token(request):
-            return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 400)
+            return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 401)
 
         msg, code = delete_user_db(id, database)
         return make_response(jsonify(msg), code)
