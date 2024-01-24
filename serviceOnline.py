@@ -38,13 +38,13 @@ def create_room(data, room_ref, db):
     room_data = RoomData.from_dict(data)
     if not room_data:
         return make_response(jsonify({'msg': 'Invalid room data format.'}), 401)
-
     userId = data.get("playerOneId")
     roomId = generate_room_id(userId=userId)
-    room_ref.document(roomId).set({'roomId': roomId, **data})
-    Thread(target=listen_for_game_changes, args=[roomId, db]).start()
+    room_data.roomId = roomId
+    room_ref.document(roomId).set(room_data.to_dict())
+    #Thread(target=listen_for_game_changes, args=[roomId, db]).start()
 
-    return make_response({'roomId': roomId, **data}, 201)
+    return make_response(room_data.to_dict(), 201)
 
 
 def enter_room(roomId, data, room_ref, db):
@@ -55,15 +55,15 @@ def enter_room(roomId, data, room_ref, db):
         
         try:
             playerTwoId = data.get("playerOneId")
+            playerTwoUsername = data.get("playerOneUsername")
             rankPlayerTwo = data.get("rankPlayerOne")
             room = room_ref.document(roomId)
 
             transaction.update(room, {
                 "playerTwoId": playerTwoId,
-                "lastOnlinePlayerTwo": True,
+                "playerTwoUsername": playerTwoUsername,
                 "rankPlayerTwo": rankPlayerTwo,
-                "isFree": False,
-                "gameState": "Start"
+                "gameState": "JOINED"
             })
             return True
         except Exception as e:
@@ -107,7 +107,6 @@ class OnlineResource(Resource):
             return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 401)
     
         parameters = request.json
-        print(parameters)
         try:
             if isinstance(parameters, dict):
                 room_info = GameSchema().load(parameters)
@@ -116,12 +115,12 @@ class OnlineResource(Resource):
     
             rankPlayerTwo = float(room_info.get("rankPlayerOne"))
             docs = (self.rooms_ref
-                    .where(filter=FieldFilter("isFree", "==", True))
+                    .where(filter=FieldFilter("gameState", "==", "CREATED"))
                     .where(filter=FieldFilter("rankPlayerOne", ">=", rankPlayerTwo - 300.0))
                     .where(filter=FieldFilter("rankPlayerOne", "<=", rankPlayerTwo + 300.0))
                     .limit(10)
                     .stream())
-            
+            print(parameters)
             for doc in docs:
                 docDict = doc.to_dict()
                 roomId = docDict.get("roomId")
@@ -135,48 +134,3 @@ class OnlineResource(Resource):
             print("Post game error: ",str(e))
             return make_response(jsonify({'msg': str(e)}), 402)
 
-    def put(self, id):
-        if not validate_token(request):
-            return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 401)
-
-        parameters = request.json
-
-        try: 
-            filter_1 = FieldFilter("playerOneId", "==", id)
-            filter_2 = FieldFilter("playerTwoId", "==", id)
-
-            or_filter = Or(filters=[filter_1, filter_2])
-
-            docs = (self.rooms_ref
-                    .where(filter=or_filter)
-                    .limit(1)
-                    .stream())
-
-            for doc in docs:
-                docDict = doc.to_dict()
-                board = chess.Board(docDict.get("boardState"))
-                chess_move = chess.Move.from_uci(parameters.get("move"))
-                if chess_move in board.legal_moves:
-                    board.push(chess_move)
-                    isFinish = board.outcome() == None
-                    transaction = self.db.transaction()
-                    transaction.update(doc, {
-                        "lastMove": chess_move,
-                        "boardState": board.fen(),
-                        "currentTurn": board.turn,
-                        "gameState": "Start" if (isFinish) else "Terminate",
-                        "winner": board.outcome().winner if (isFinish) else '',
-                        "termination": board.outcome().termination if (isFinish) else ''
-                    })
-                    #if isFinish:
-                        #TODO: Create record in database
-                    return make_response(jsonify(), 200)
-                else:
-                    return make_response(jsonify({'msg': "Illegal Move!"}), 402)
-
-        except Exception as e:
-            return make_response(jsonify({'msg': str(e)}), 402)
-
-    def delete(self, id):
-        if not validate_token(request):
-            return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 401)

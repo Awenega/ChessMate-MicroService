@@ -1,21 +1,16 @@
-from datetime import datetime
-
 from marshmallow import Schema,fields
-
 
 class RoomData:
     def __init__(
         self,
         currentTurn=None,
         boardState="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-        dataCreation=datetime.now(),
-        isFree=True,
-        gameState="Pending",
+        gameState="CREATED",
         lastMove=None,
-        lastOnlinePlayerOne=datetime.now(),
-        lastOnlinePlayerTwo=None,
         playerOneId=None,
         playerTwoId=None,
+        playerOneUsername=None,
+        playerTwoUsername=None,
         rankPlayerOne=None,
         rankPlayerTwo=None,
         roomId=None,
@@ -25,13 +20,11 @@ class RoomData:
         self.roomId = roomId
         self.playerOneId = playerOneId
         self.playerTwoId = playerTwoId
-        self.isFree = isFree
+        self.playerOneUsername = playerOneUsername
+        self.playerTwoUsername = playerTwoUsername
         self.gameState = gameState
-        self.lastOnlinePlayerOne = lastOnlinePlayerOne
-        self.lastOnlinePlayerTwo = lastOnlinePlayerTwo
         self.rankPlayerOne = rankPlayerOne
         self.rankPlayerTwo = rankPlayerTwo
-        self.dataCreation = dataCreation
         self.currentTurn = currentTurn
         self.boardState = boardState
         self.lastMove = lastMove
@@ -40,8 +33,9 @@ class RoomData:
 
     @staticmethod
     def from_dict(source):
-        room = RoomData(source["playerOneId"],
-                        source["rankPlayerOne"], source["dataCreation"])
+        room = RoomData(playerOneId=source["playerOneId"],
+                        rankPlayerOne=source["rankPlayerOne"],
+                        playerOneUsername=source["playerOneUsername"])
 
         return room
 
@@ -50,13 +44,11 @@ class RoomData:
             "roomId": self.roomId,
             "playerOneId": self.playerOneId,
             "playerTwoId": self.playerTwoId,
-            "isFree": self.isFree,
+            "playerOneUsername": self.playerOneUsername,
+            "playerTwoUsername": self.playerTwoUsername,
             "gameState": self.gameState,
-            "lastOnlinePlayerOne": self.lastOnlinePlayerOne,
-            "lastOnlinePlayerTwo": self.lastOnlinePlayerTwo,
             "rankPlayerOne": self.rankPlayerOne,
             "rankPlayerTwo": self.rankPlayerTwo,
-            "dataCreation": self.dataCreation,
             "currentTurn": self.currentTurn,
             "boardState": self.boardState,
             "lastMove": self.lastMove,
@@ -70,13 +62,11 @@ class RoomData:
             f"roomId={self.roomId}, "
             f"playerOneId={self.playerOneId}, "
             f"playerTwoId={self.playerTwoId}, "
-            f"isFree={self.isFree}, "
+            f"playerOneUsername={self.playerOneUsername}, "
+            f"playerTwoUsername={self.playerTwoUsername}, "
             f"gameState={self.gameState}, "
-            f"lastOnlinePlayerOne={self.lastOnlinePlayerOne}, "
-            f"lastOnlinePlayerTwo={self.lastOnlinePlayerTwo}, "
             f"rankPlayerOne={self.rankPlayerOne}, "
             f"rankPlayerTwo={self.rankPlayerTwo}, "
-            f"dataCreation={self.dataCreation}), "
             f"currentTurn={self.currentTurn}, "
             f"boardState={self.boardState}, "
             f"lastMove={self.lastMove}), "
@@ -88,13 +78,11 @@ class GameSchema(Schema):
     roomId = fields.String()
     playerOneId = fields.String()
     playerTwoId = fields.String()
-    isFree = fields.Boolean()
+    playerOneUsername = fields.String()
+    playerTwoUsername = fields.String()
     gameState = fields.String()
-    lastOnlinePlayerOne = fields.DateTime(allow_none=True)
-    lastOnlinePlayerTwo = fields.DateTime(allow_none=True)
     rankPlayerOne = fields.Float(allow_none=True)
     rankPlayerTwo = fields.Float(allow_none=True)
-    dataCreation = fields.DateTime(allow_none=True)
     currentTurn = fields.String()
     boardState = fields.String()
     lastMove = fields.String()
