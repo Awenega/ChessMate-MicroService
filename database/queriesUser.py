@@ -7,7 +7,14 @@ def get_user_db(id, database):
     print(f'Requested user with id {id}')
     connection = psycopg2.connect(database)
     with connection.cursor() as cur:
-        cur.execute("SELECT * FROM users WHERE id = %s;", (id,))
+        cur.execute(f'''
+                    SELECT id, email, emailverified, 
+                            profilepictureurl, provider, username, 
+                            matchesplayed, matcheswon, elorank, country, 
+                            TO_CHAR(signupDate:: DATE, 'dd Mon yyyy') 
+                    FROM users
+                    WHERE id = '{id}';
+                    ''')
         ret = cur.fetchone()
 
         if ret:

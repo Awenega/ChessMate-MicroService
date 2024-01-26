@@ -2,7 +2,7 @@ from marshmallow import Schema, fields
 
 
 class User(object):
-    def __init__(self, id, email, emailVerified, profilePictureUrl, provider, username, matchesPlayed, matchesWon, eloRank):
+    def __init__(self, id, email, emailVerified, profilePictureUrl, provider, username, matchesPlayed, matchesWon, eloRank, country, signupDate):
         self.email = email
         self.emailVerified = emailVerified
         self.profilePictureUrl = profilePictureUrl
@@ -12,6 +12,8 @@ class User(object):
         self.matchesPlayed = matchesPlayed
         self.matchesWon = matchesWon
         self.eloRank = eloRank
+        self.country = country
+        self.signupDate = signupDate
 
 
 class UserSchema(Schema):
@@ -24,3 +26,5 @@ class UserSchema(Schema):
     matchesPlayed = fields.Integer()
     matchesWon = fields.Integer()
     eloRank = fields.Float()
+    country = fields.String()
+    signupDate = fields.String()
