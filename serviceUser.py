@@ -79,3 +79,12 @@ class UserImageResource(Resource):
         if profilePictureUrl == "default.jpg":
             return send_from_directory(f"assets/user_images", profilePictureUrl)
         return send_from_directory(f"assets/user_images/{id}", profilePictureUrl)
+
+class UserScore(Resource):
+    def put(self, id):
+        if not validate_token(request):
+            return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 401)
+
+        reset_score_info = {"id": id, "matchesPlayed": 0, "matchesWon": 0, 'eloRank': 0.0}
+        msg, code = update_user_db(id, reset_score_info, database)
+        return make_response(jsonify(msg), code)
