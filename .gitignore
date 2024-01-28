@@ -10,6 +10,8 @@ __pycache__/
 *.json
 
 # Distribution / packaging
+assets/user_images/*
+!assets/user_images/default.jpg
 .Python
 build/
 develop-eggs/
