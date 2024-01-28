@@ -1,9 +1,9 @@
 from flask_restful import Resource
 import json
-from flask import jsonify, request, make_response
+from flask import jsonify, request, make_response, send_from_directory
 from database.queriesUser import delete_user_db, get_user_db, insert_user_db, update_user_db
 from model.user import UserSchema
-
+import os
 
 def validate_token(request):
     token = request.headers.get('Authorization')
@@ -32,7 +32,7 @@ class UserResource(Resource):
         if not validate_token(request):
             return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 401)
         user_info = get_user_db(id, database)
-        print(user_info)
+
         if user_info is None:
             return make_response(jsonify({'msg': f'No User found for id: {id}'}), 204)
         else:
@@ -52,7 +52,17 @@ class UserResource(Resource):
         if not validate_token(request):
             return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 401)
 
-        parameters = request.json
+        if 'application/json' in request.content_type:
+            parameters = json.dumps(request.json)
+        else:
+            parameters = request.form.get('json_data')
+            profilePictureUrl = json.loads(parameters)['profilePictureUrl']
+            path = f"assets/user_images/{id}"
+            if not os.path.exists(path): 
+                os.makedirs(path) 
+            request.files['file'].save(f"{path}/{profilePictureUrl}")
+            print(parameters)
+
         user_info = UserSchema().loads(parameters)
         msg, code = update_user_db(id, user_info, database)
         return make_response(jsonify(msg), code)
@@ -63,3 +73,9 @@ class UserResource(Resource):
 
         msg, code = delete_user_db(id, database)
         return make_response(jsonify(msg), code)
+
+class UserImageResource(Resource):
+    def get(self, id, profilePictureUrl):
+        if profilePictureUrl == "default.jpg":
+            return send_from_directory(f"assets/user_images", profilePictureUrl)
+        return send_from_directory(f"assets/user_images/{id}", profilePictureUrl)
