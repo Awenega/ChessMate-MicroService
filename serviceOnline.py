@@ -1,25 +1,14 @@
-<<<<<<< Updated upstream
-import io
-from typing import IO
-import chess
-=======
->>>>>>> Stashed changes
 from flask_restful import Resource
 from firebase_admin import firestore
 from google.cloud.firestore_v1.base_query import FieldFilter, Or
 import json
 from flask import jsonify, request, make_response
 from model.game import GameSchema, RoomData
-<<<<<<< Updated upstream
-from threading import Thread
 from crop_image import crop_image
-import os
 from PIL import Image
 from recognize import predict_chessboard
 
-=======
 from datetime import datetime
->>>>>>> Stashed changes
 
 def validate_token(request):
     token = request.headers.get('Authorization')
