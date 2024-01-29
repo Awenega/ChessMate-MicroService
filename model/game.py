@@ -4,11 +4,13 @@ class RoomData:
     def __init__(
         self,
         currentTurn=None,
-        boardState="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+        boardState="",
         gameState="CREATED",
         lastMove=None,
         playerOneId=None,
         playerTwoId=None,
+        pictureUrlOne=None,
+        pictureUrlTwo=None,
         playerOneUsername=None,
         playerTwoUsername=None,
         rankPlayerOne=None,
@@ -22,6 +24,8 @@ class RoomData:
         self.playerTwoId = playerTwoId
         self.playerOneUsername = playerOneUsername
         self.playerTwoUsername = playerTwoUsername
+        self.pictureUrlOne = pictureUrlOne
+        self.pictureUrlTwo = pictureUrlTwo
         self.gameState = gameState
         self.rankPlayerOne = rankPlayerOne
         self.rankPlayerTwo = rankPlayerTwo
@@ -35,7 +39,9 @@ class RoomData:
     def from_dict(source):
         room = RoomData(playerOneId=source["playerOneId"],
                         rankPlayerOne=source["rankPlayerOne"],
-                        playerOneUsername=source["playerOneUsername"])
+                        playerOneUsername=source["playerOneUsername"],
+                        pictureUrlOne=source["pictureUrlOne"]
+                        )
 
         return room
 
@@ -46,6 +52,8 @@ class RoomData:
             "playerTwoId": self.playerTwoId,
             "playerOneUsername": self.playerOneUsername,
             "playerTwoUsername": self.playerTwoUsername,
+            "pictureUrlOne": self.pictureUrlOne,
+            "pictureUrlTwo": self.pictureUrlTwo,
             "gameState": self.gameState,
             "rankPlayerOne": self.rankPlayerOne,
             "rankPlayerTwo": self.rankPlayerTwo,
@@ -64,6 +72,8 @@ class RoomData:
             f"playerTwoId={self.playerTwoId}, "
             f"playerOneUsername={self.playerOneUsername}, "
             f"playerTwoUsername={self.playerTwoUsername}, "
+            f"pictureUrlOne={self.pictureUrlOne}, "
+            f"pictureUrlTwo={self.pictureUrlTwo}, "
             f"gameState={self.gameState}, "
             f"rankPlayerOne={self.rankPlayerOne}, "
             f"rankPlayerTwo={self.rankPlayerTwo}, "
@@ -80,6 +90,8 @@ class GameSchema(Schema):
     playerTwoId = fields.String()
     playerOneUsername = fields.String()
     playerTwoUsername = fields.String()
+    pictureUrlOne = fields.String()
+    pictureUrlTwo = fields.String()
     gameState = fields.String()
     rankPlayerOne = fields.Float(allow_none=True)
     rankPlayerTwo = fields.Float(allow_none=True)

@@ -1,19 +1,25 @@
+<<<<<<< Updated upstream
 import io
 from typing import IO
 import chess
+=======
+>>>>>>> Stashed changes
 from flask_restful import Resource
 from firebase_admin import firestore
 from google.cloud.firestore_v1.base_query import FieldFilter, Or
 import json
 from flask import jsonify, request, make_response
-from helperCelery import listen_for_game_changes
 from model.game import GameSchema, RoomData
+<<<<<<< Updated upstream
 from threading import Thread
 from crop_image import crop_image
 import os
 from PIL import Image
 from recognize import predict_chessboard
 
+=======
+from datetime import datetime
+>>>>>>> Stashed changes
 
 def validate_token(request):
     token = request.headers.get('Authorization')
@@ -47,12 +53,11 @@ def create_room(data, room_ref, db):
     roomId = generate_room_id(userId=userId)
     room_data.roomId = roomId
     room_ref.document(roomId).set(room_data.to_dict())
-    #Thread(target=listen_for_game_changes, args=[roomId, db]).start()
 
     return make_response(room_data.to_dict(), 201)
 
 
-def enter_room(roomId, data, room_ref, db):
+def enter_room(roomInfo, data, room_ref, db):
     transaction = db.transaction()
 
     @firestore.transactional
@@ -61,14 +66,29 @@ def enter_room(roomId, data, room_ref, db):
         try:
             playerTwoId = data.get("playerOneId")
             playerTwoUsername = data.get("playerOneUsername")
+            playerOneUsername = roomInfo.get("playerOneUsername")
+            pictureUrlTwo = data.get("pictureUrlOne")
             rankPlayerTwo = data.get("rankPlayerOne")
+            roomId = roomInfo.get("roomId")
             room = room_ref.document(roomId)
+            current_date = datetime.now().strftime("%Y.%m.%d")
+
+            boardState = f"""
+                [Event "ChessMate Game"]
+                [Site "Online"]
+                [Date "{current_date}"]
+                [White "{playerOneUsername}"]
+                [Black "{playerTwoUsername}"]
+            """
 
             transaction.update(room, {
                 "playerTwoId": playerTwoId,
                 "playerTwoUsername": playerTwoUsername,
+                "pictureUrlTwo": pictureUrlTwo,
                 "rankPlayerTwo": rankPlayerTwo,
-                "gameState": "JOINED"
+                "gameState": "JOINED",
+                "boardState": boardState,
+                "currentTurn": "",
             })
             return True
         except Exception as e:
@@ -94,8 +114,9 @@ class OnlineResource(Resource):
 
         filter_1 = FieldFilter("playerOneId", "==", id)
         filter_2 = FieldFilter("playerTwoId", "==", id)
+        filter_3 = FieldFilter("gameState", "==", "INPROGRESS")
 
-        or_filter = Or(filters=[filter_1, filter_2])
+        or_filter = Or(filters=[filter_1, filter_2,filter_3])
 
         docs = (self.rooms_ref
                 .where(filter=or_filter)
@@ -121,18 +142,17 @@ class OnlineResource(Resource):
             rankPlayerTwo = float(room_info.get("rankPlayerOne"))
             docs = (self.rooms_ref
                     .where(filter=FieldFilter("gameState", "==", "CREATED"))
-                    .where(filter=FieldFilter("rankPlayerOne", ">=", rankPlayerTwo - 300.0))
-                    .where(filter=FieldFilter("rankPlayerOne", "<=", rankPlayerTwo + 300.0))
+                    .where(filter=FieldFilter("rankPlayerOne", ">=", rankPlayerTwo - 50.0))
+                    .where(filter=FieldFilter("rankPlayerOne", "<=", rankPlayerTwo + 50.0))
                     .limit(10)
                     .stream())
             print(parameters)
             for doc in docs:
                 docDict = doc.to_dict()
-                roomId = docDict.get("roomId")
                 result = enter_room(
-                    roomId=roomId, data=room_info, room_ref=self.rooms_ref, db=self.db)
+                    roomInfo = docDict, data=room_info, room_ref=self.rooms_ref, db=self.db)
                 if result:
-                    return make_response(jsonify({'roomId': roomId, **docDict}), 200)
+                    return make_response(jsonify({'roomId': docDict.get("roomId"), **docDict}), 200)
             return create_room(data=room_info, room_ref=self.rooms_ref, db=self.db)
 
         except Exception as e:
