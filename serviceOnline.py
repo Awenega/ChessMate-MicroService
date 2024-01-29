@@ -1,3 +1,5 @@
+import io
+from typing import IO
 import chess
 from flask_restful import Resource
 from firebase_admin import firestore
@@ -7,12 +9,15 @@ from flask import jsonify, request, make_response
 from helperCelery import listen_for_game_changes
 from model.game import GameSchema, RoomData
 from threading import Thread
+from crop_image import crop_image
+import os
+from PIL import Image
+from recognize import predict_chessboard
 
 
 def validate_token(request):
     token = request.headers.get('Authorization')
     return token == postgres_credentials.get('token')
-
 
 def load_credentials():
     try:
@@ -133,4 +138,16 @@ class OnlineResource(Resource):
         except Exception as e:
             print("Post game error: ",str(e))
             return make_response(jsonify({'msg': str(e)}), 402)
+        
+class ParseChessBoard(Resource):
+    def post(self):
+        if not validate_token(request):
+            return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 401)
+        
+        print(request.files['file'])
+        image = Image.open(request.files['file'])
+        image_cropped = crop_image(image)
+        FeN = predict_chessboard(image_cropped)
+    
+        return make_response(jsonify({'msg': FeN}), 200)
 
