@@ -4,6 +4,7 @@ from flask import jsonify, request, make_response, send_from_directory
 from database.queriesUser import delete_user_db, get_user_db, insert_user_db, update_user_db
 from model.user import UserSchema
 import os
+import shutil
 
 def validate_token(request):
     token = request.headers.get('Authorization')
@@ -60,6 +61,12 @@ class UserResource(Resource):
             path = f"assets/user_images/{id}"
             if not os.path.exists(path): 
                 os.makedirs(path) 
+            if os.listdir(path):
+                files = os.listdir(path)
+                for file in files:
+                    file_path = os.path.join(path, file)
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
             request.files['file'].save(f"{path}/{profilePictureUrl}")
             print(parameters)
 
@@ -72,6 +79,9 @@ class UserResource(Resource):
             return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 401)
 
         msg, code = delete_user_db(id, database)
+        path = f"assets/user_images/{id}"
+        if os.path.exists(path): 
+            shutil.rmtree(path)
         return make_response(jsonify(msg), code)
 
 class UserImageResource(Resource):
