@@ -69,3 +69,4 @@ def delete_user_db(id, database):
             return {'msg': f"User deleted successfully"}, 200
         except (Exception, psycopg2.Error) as err:
             return {'msg': "Error while deleting user in PostgreSQL...\n", 'err': str(err)}, 400
+

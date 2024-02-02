@@ -90,6 +90,10 @@ class UserImageResource(Resource):
             return send_from_directory(f"assets/user_images", profilePictureUrl)
         return send_from_directory(f"assets/user_images/{id}", profilePictureUrl)
 
+class DefaultImageResource(Resource):
+    def get(self, id):
+        return send_from_directory(f"assets/user_images", id)
+
 class UserScore(Resource):
     def put(self, id):
         if not validate_token(request):
