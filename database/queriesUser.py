@@ -22,7 +22,7 @@ def get_user_db(id, database):
                     LEFT JOIN
                         matches ON id = userIdOne OR id = userIdTwo
                     WHERE 
-                        id = '{id}'
+                        id = '{id}' and matchType = 'ONLINE'
                     GROUP BY id;
                     ''')
         ret = cur.fetchone()
