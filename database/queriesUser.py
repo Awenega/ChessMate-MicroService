@@ -26,8 +26,6 @@ def get_user_db(id, database):
                     GROUP BY id;
                     ''')
         ret = cur.fetchone()
-        print("ENTRO")
-        print(ret)
         if ret:
             return User(*ret)
         else:

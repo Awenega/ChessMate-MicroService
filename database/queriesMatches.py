@@ -59,4 +59,19 @@ def insert_match_db(match_info, database):
             return {'msg': f"Insert match into the database"}, 200
         except (Exception, psycopg2.Error) as err:
             return {'msg': "Error while interacting with PostgreSQL...\n", 'err': str(err)}, 400
+
+def delete_match_db(userId, database):
+    print(f'Deleting all matches of {userId}')
+    connection = psycopg2.connect(database)
+
+    with connection.cursor() as cur:
+        try:
+            cur.execute(f''' 
+                        DELETE FROM matches 
+                        WHERE userIdOne = '{userId}' or useridtwo = '{userId}'
+                        ''')
+            connection.commit()
+            return {'msg': f"Deleted all matches from the database"}, 200
+        except (Exception, psycopg2.Error) as err:
+            return {'msg': "Error while interacting with PostgreSQL...\n", 'err': str(err)}, 400
     

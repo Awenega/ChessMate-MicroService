@@ -2,6 +2,7 @@ from flask_restful import Resource
 import json
 from flask import jsonify, request, make_response, send_from_directory
 from database.queriesUser import delete_user_db, get_user_db, insert_user_db, update_user_db
+from database.queriesMatches import delete_match_db
 from model.user import UserSchema
 import os
 import shutil
@@ -99,6 +100,7 @@ class UserScore(Resource):
         if not validate_token(request):
             return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 401)
 
-        reset_score_info = {"id": id, "matchesPlayed": 0, "matchesWon": 0, 'eloRank': 0.0}
+        reset_score_info = {"id": id, "matchesPlayed": 0, "matchesWon": 0, 'eloRank': 400.0}
         msg, code = update_user_db(id, reset_score_info, database)
+        msg, code = delete_match_db(id, database)
         return make_response(jsonify(msg), code)
