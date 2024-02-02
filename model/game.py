@@ -5,6 +5,7 @@ class RoomData:
         self,
         currentTurn=None,
         boardState="",
+        fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
         gameState="CREATED",
         lastMove=None,
         playerOneId=None,
@@ -31,6 +32,7 @@ class RoomData:
         self.rankPlayerTwo = rankPlayerTwo
         self.currentTurn = currentTurn
         self.boardState = boardState
+        self.fen = fen
         self.lastMove = lastMove
         self.winner = winner
         self.termination = termination
@@ -59,6 +61,7 @@ class RoomData:
             "rankPlayerTwo": self.rankPlayerTwo,
             "currentTurn": self.currentTurn,
             "boardState": self.boardState,
+            "fen": self.fen,
             "lastMove": self.lastMove,
             "winner": self.winner,
             "termination": self.termination
@@ -79,6 +82,7 @@ class RoomData:
             f"rankPlayerTwo={self.rankPlayerTwo}, "
             f"currentTurn={self.currentTurn}, "
             f"boardState={self.boardState}, "
+            f"fen={self.fen}, "
             f"lastMove={self.lastMove}), "
             f"winner={self.winner}, "
             f"termination={self.termination}"
@@ -97,6 +101,7 @@ class GameSchema(Schema):
     rankPlayerTwo = fields.Float(allow_none=True)
     currentTurn = fields.String()
     boardState = fields.String()
+    fen = fields.String()
     lastMove = fields.String()
     winner = fields.String()
     termination = fields.String()

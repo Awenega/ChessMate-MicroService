@@ -1,6 +1,6 @@
 from flask_restful import Resource
 from firebase_admin import firestore
-from google.cloud.firestore_v1.base_query import FieldFilter, Or
+from google.cloud.firestore_v1.base_query import FieldFilter, Or, And
 import json
 from flask import jsonify, request, make_response
 from model.game import GameSchema, RoomData
@@ -77,7 +77,8 @@ def enter_room(roomInfo, data, room_ref, db):
                 "rankPlayerTwo": rankPlayerTwo,
                 "gameState": "JOINED",
                 "boardState": boardState,
-                "currentTurn": "",
+                "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+                "currentTurn": "WHITE",
             })
             return True
         except Exception as e:
@@ -101,21 +102,27 @@ class OnlineResource(Resource):
         if not validate_token(request):
             return make_response(jsonify({'msg': 'Unauthorized. Invalid or missing token.'}), 401)
 
-        filter_1 = FieldFilter("playerOneId", "==", id)
-        filter_2 = FieldFilter("playerTwoId", "==", id)
-        filter_3 = FieldFilter("gameState", "==", "INPROGRESS")
+        try:
+            print(id)
+            filter_1 = FieldFilter("playerOneId", "==", id)
+            filter_2 = FieldFilter("playerTwoId", "==", id)
+            filter_3 = FieldFilter("gameState", "==", "INPROGRESS")
 
-        or_filter = Or(filters=[filter_1, filter_2,filter_3])
+            or_filter = Or(filters=[filter_1, filter_2])
+            and_filter = And(filters=[or_filter,filter_3])
 
-        docs = (self.rooms_ref
-                .where(filter=or_filter)
-                .limit(1)
-                .stream())
+            docs = (self.rooms_ref
+                    .where(filter=and_filter)
+                    .limit(1)
+                    .stream())
 
-        for doc in docs:
-            return make_response(doc.to_dict(), 200)
+            for doc in docs:
+                return make_response(doc.to_dict(), 200)
 
-        return make_response(jsonify({'msg': 'Room not found.'}), 404)
+            return make_response(jsonify({'msg': 'Room not found.'}), 404)
+        except Exception as e:
+            print("Get game error: ",str(e))
+            return make_response(jsonify({'msg': str(e)}), 400)
 
     def post(self,id):
         if not validate_token(request):
