@@ -7,6 +7,8 @@ from model.game import GameSchema, RoomData
 from crop_image import crop_image
 from PIL import Image
 from recognize import predict_chessboard
+import random
+import string
 
 from datetime import datetime
 
@@ -27,13 +29,12 @@ def load_credentials():
         return None
 
 
-def create_room(data, room_ref):
+def create_room(data, room_ref, db):
     def generate_room_id():
         import uuid
-        
         room_id = str(uuid.uuid4().hex)[:20]
-        uniquestring = f"room{room_id}"
-        return uniquestring
+        unique_string = f"room_{room_id}"
+        return unique_string
 
     room_data = RoomData.from_dict(data)
     if not room_data:

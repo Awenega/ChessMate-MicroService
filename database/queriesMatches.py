@@ -21,7 +21,12 @@ def get_matches_db(id, database):
 
                     SELECT 
                         roomId, matchType, userIdTwo AS userIdOne, userIdOne AS userIdTwo,
-                        results, COALESCE(username, 'Unknown') AS usernameUserTwo, 
+                        CASE results
+                           WHEN 0 THEN 1
+                           WHEN 1 THEN 0
+                           ELSE results
+                        END AS results,
+                        COALESCE(username, 'Unknown') AS usernameUserTwo, 
                         COALESCE(profilePictureUrl, 'default.jpg') AS profilePictureUrlUserTwo
                         FROM 
                             matches 
