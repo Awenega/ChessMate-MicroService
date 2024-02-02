@@ -20,13 +20,14 @@ def get_user_db(id, database):
                     FROM 
                         users
                     LEFT JOIN
-                        matches ON id = userIdOne OR id = userIdTwo
+                        matches ON (id = userIdOne OR id = userIdTwo) and matchType = 'ONLINE'
                     WHERE 
-                        id = '{id}' and matchType = 'ONLINE'
+                        id = '{id}'
                     GROUP BY id;
                     ''')
         ret = cur.fetchone()
-
+        print("ENTRO")
+        print(ret)
         if ret:
             return User(*ret)
         else:
