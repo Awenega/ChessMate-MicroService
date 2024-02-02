@@ -2,7 +2,6 @@ import psycopg2
 from psycopg2 import sql
 from model.user import User
 
-
 def get_user_db(id, database):
     print(f'Requested user with id {id}')
     connection = psycopg2.connect(database)
@@ -10,10 +9,21 @@ def get_user_db(id, database):
         cur.execute(f'''
                     SELECT id, email, emailverified, 
                             profilepictureurl, provider, username, 
-                            matchesplayed, matcheswon, elorank, country, 
+                            CAST(COUNT(roomId) AS INT) AS matchesPlayed, 
+                            CAST(SUM(CASE
+                                    WHEN results = 0 AND id = userIdOne THEN 1
+                                    WHEN results = 1 AND id = userIdTwo THEN 1
+                                    ELSE 0
+                                END) AS INT) AS matchesWon,
+                            elorank, country, 
                             TO_CHAR(signupDate:: DATE, 'dd Mon yyyy') 
-                    FROM users
-                    WHERE id = '{id}';
+                    FROM 
+                        users
+                    LEFT JOIN
+                        matches ON id = userIdOne OR id = userIdTwo
+                    WHERE 
+                        id = '{id}'
+                    GROUP BY id;
                     ''')
         ret = cur.fetchone()
 
