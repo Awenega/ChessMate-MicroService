@@ -27,19 +27,19 @@ def load_credentials():
         return None
 
 
-def create_room(data, room_ref, db):
-    def generate_room_id(userId):
-        import hashlib
-
-        hashed_user_id = hashlib.sha256(userId.encode()).hexdigest()
-        unique_string = f"room_{hashed_user_id}"
-        return unique_string
+def create_room(data, room_ref):
+    def generate_room_id():
+        import uuid
+        
+        room_id = str(uuid.uuid4().hex)[:20]
+        uniquestring = f"room{room_id}"
+        return uniquestring
 
     room_data = RoomData.from_dict(data)
     if not room_data:
         return make_response(jsonify({'msg': 'Invalid room data format.'}), 401)
     userId = data.get("playerOneId")
-    roomId = generate_room_id(userId=userId)
+    roomId = generate_room_id()
     room_data.roomId = roomId
     room_ref.document(roomId).set(room_data.to_dict())
 
@@ -149,7 +149,7 @@ class OnlineResource(Resource):
                     roomInfo = docDict, data=room_info, room_ref=self.rooms_ref, db=self.db)
                 if result:
                     return make_response(jsonify({'roomId': docDict.get("roomId"), **docDict}), 200)
-            return create_room(data=room_info, room_ref=self.rooms_ref, db=self.db)
+            return create_room(data=room_info, room_ref=self.rooms_ref)
 
         except Exception as e:
             print("Post game error: ",str(e))
