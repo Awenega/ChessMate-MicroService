@@ -29,7 +29,7 @@ def load_credentials():
         return None
 
 
-def create_room(data, room_ref, db):
+def create_room(data, room_ref):
     def generate_room_id():
         import uuid
         room_id = str(uuid.uuid4().hex)[:20]
